@@ -6,6 +6,7 @@
     "noEmitOnError": true,
     "noEmit": true,
     "baseUrl": ".",
+    "experimentalDecorators": true,
     "paths": {
       "ember": ["node_modules/at-types-ember"],
       "npm:*": ["local-types/*"],

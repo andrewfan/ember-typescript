@@ -1,43 +1,52 @@
 import Ember from 'ember';
 const {
-    computed
+  computed
 } = Ember;
 
+export function cpDecorator(...properties: string[]) {
+  return (target: Ember.Object, key: any, descriptor: any) => {
+    const oldMethod = descriptor.value;
+    const oldGet = descriptor.get;
+    const oldSet = descriptor.set;
+    if (typeof oldMethod === 'function') {
+      return {
+        value: Ember.computed(...properties, function (...args: any[]) {
+          return oldMethod.apply(this, args);
+        })
+      }
+    } else if (typeof oldGet === 'function' || typeof oldSet === 'function') {
+      return {
+        value: Ember.computed(...properties, {
+          get() {
+            return oldGet.apply(this);
+          },
+          set(key, value) {
+            oldSet.call(this, value);
+            return value;
+          }
+        })
+      }
+    }
 
-class Test extends Ember.Object {
-    _value: string
-    private getValue: () => ''
-    private setValue(value: string) {
-        return this._value = value;
-    }
-    value: Ember.ComputedProperty
-    init() {
-       this.value = computed({
-           get:() => 'default',
-         set:(key, value) => this.setValue(value)
-       })
-    }
-    get tValue() :string{
-       return this.getValue();
-    }
-    set tValue(value: string) {
-        this.setValue(value)
-    }
+    return descriptor;
+  }
 }
-export default class extends Ember.Controller {
-    greetPerson: Ember.ComputedProperty
-    name: string
-    test: Test
-    init(...args: any[]) {
-        this.test = new Test();
 
-        this.greetPerson = computed('name', {
-            get:() => 'default',
-            set:(key, value) => this.greeter(value)
-        });
-    }
-     (person: string) {
-        this.test.tValue = person + 'tValue'
-        return `Hello ${person}`;
-    }
+class Test2 extends Ember.Controller {
+  first_name: string
+  last_name: string
+  @cpDecorator('first_name', 'last_name')
+  fullName2() {
+    return `${this.first_name} + ${this.last_name}`;
+  }
+  @cpDecorator('first_name', 'last_name')
+  get fullName() {
+    return `${this.first_name} + ${this.last_name}`;
+  }
+  //and set
+  set fullName(value: string) {
+    // TODO: setters could not return value
+    console.log(value);
+  }
 };
+export default Test2
